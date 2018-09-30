@@ -1,0 +1,79 @@
+1)
+
+MATCH (g1:Game)-[:Move]->(p1:Position)
+WHERE p1.fen = 'r1bqkbnrpppp1ppp2n51B2p34P35N2PPPP1PPPRNBQK2R'
+WITH COUNT(g1.gameId) AS GamesFenAppeared
+MATCH (g2:Game)-[:Move]->(p2:Position)
+WHERE p2.fen = 'r1bqkbnrpppp1ppp2n51B2p34P35N2PPPP1PPPRNBQK2R' AND g2.result = 'White'
+WITH COUNT(g2.gameId) AS WhiteWins,GamesFenAppeared
+RETURN GamesFenAppeared, round(100.0 * WhiteWins/GamesFenAppeared) AS WhiteWinsPerc
+
+
+2)
+
+MATCH (g:Game)-[:Move]->(p:Position)
+WHERE p.fen = 'r1bqkbnrpppp1ppp2n51B2p34P35N2PPPP1PPPRNBQK2R'
+WITH COUNT(g.gameId) AS NumOfGames, g.result AS GameResult
+RETURN  GameResult, NumOfGames
+
+
+3)
+
+MATCH (t:Tournament)-[:Include]->(g:Game)
+WITH count(g.gameId) as NumOfGames,t.name as Event,collect(g.gameId) as ListOfGames
+MATCH (pl:Player)-[:Plays]->(g:Game)
+WHERE pl.name ='Karpov  Anatoly' and g.gameId in ListOfGames
+RETURN  count(pl.name) as Participations, Event,NumOfGames
+ORDER BY NumOfGames DESC LIMIT 1
+
+4)
+
+MATCH (om:OpenMove)-[:Opening]->(g:Game)
+WHERE om.name = 'Ruy Lopez'
+WITH collect(g.gameId) AS ListOfGames
+MATCH (pl:Player)-[:Plays]->(g:Game)
+WHERE g.gameId IN ListOfGames
+RETURN pl.name AS Player, count(pl.name) as NumOfGames
+ORDER BY  NumOfGames DESC
+LIMIT 1
+
+
+5)
+
+MATCH (pl:Player)-[:Plays]->(g:Game)
+MATCH (g)-[m1:Move {moveName: 'Nc6'}]->(p1:Position)
+MATCH (g)-[m2:Move {moveName: 'Bb5'}]->(p2:Position)
+MATCH (g)-[m3:Move {moveName: 'a6'}]->(p3:Position)
+WHERE toInteger(m3.moveId) - toInteger(m2.moveId) = 1
+AND toInteger(m2.moveId) - toInteger(m1.moveId) = 1
+WITH  pl.name as Player , count(pl.name) as NumOfGames
+RETURN Player , NumOfGames
+ORDER BY NumOfGames DESC
+
+6)
+
+MATCH (g:Game{gameId:'636'})-[m:Move]->(p:Position)
+MATCH (pl:Player)-[:Plays]->(g{gameId:'636'})
+MATCH (t:Tournament)-[:Include]->(g{gameId:'636'})
+MATCH (om:OpenMove)-[:Opening]->(g{gameId:'636'})
+WITH g as Game, t as Event, pl as Player, m as Moves, om as Opening
+ORDER BY toInteger(m.moveId) ASC
+RETURN  COLLECT(DISTINCT Moves.moveName) as Moves,collect(distinct Moves.moveId) as MoveNumber, Game.result as GameResult, Game.date as GameDate, Game.moves as NumOfMoves,Game.halfMoves as NumOfHalfMoves, Event.name as Event,Event.date as EventDate,Event.site as Site ,collect(DISTINCT Player.name) as Players,Opening.name as OpeningMove
+
+
+7)
+
+MATCH (g:Game)-[m1:Move]->(p1:Position)
+WHERE p1.fen = 'r1bqkbnrpppp1ppp2n51B2p34P35N2PPPP1PPPRNBQK2R'
+MATCH (g:Game)-[m2:Move]->(p2:Position)
+WHERE m2.moveName <> 'a6' AND toInteger(m2.moveId) - toInteger(m1.moveId) = 1
+RETURN g.gameId AS Game, m2.moveName AS AlternativeMove, g.result AS Result
+
+
+
+
+
+
+
+
+
